@@ -1,0 +1,36 @@
+Here’s a single **Teams-ready summary** you can paste:
+
+---
+
+**Bottom line:** Yes — **Informatica logs cannot be used to build a reliable Workflow → DB instance (host/port/service) map.** They’re great to validate a single run, but not for an authoritative inventory.
+
+**What each log actually records**
+
+* **Workflow log:** Orchestration only (start, which sessions ran, status). **No physical DB endpoint.**
+* **Session log (one per session *per run*):** Free-text trace for that session instance; typically shows **connection/DB alias + username + type** (Relational/JDBC/ODBC). **Usually not the resolved `host:port/service`.**
+* **Command Task / script logs:** Separate shell/batch logs outside Informatica; fragment the picture further.
+* **Integration Service / node logs (e.g., pmserver):** Service events/housekeeping, **not** per-session DB endpoints.
+* **Repo session-log tables (`REP_SESS_*`):** Store **per-run** headers and free-text lines similar to session files—**no authoritative host/port fields**.
+
+**Why this becomes “tens of thousands of logs”**
+
+* Each **workflow** has **multiple sessions**; **every run** creates **one session log per session** (retries add more).
+* Across **multiple environments** and time, session-log counts far exceed workflows/mappings.
+* **Command tasks** create additional **script logs**.
+* Logs live on **Integration Service hosts**, follow **rotation/compression**, and are **not grouped by workflow**—correlation is manual and error-prone.
+
+**Why logs can’t deliver a WF → DB instance map**
+
+* **Not a system of record:** Logs are **per-run snapshots**; they don’t represent current configuration.
+* **Missing fields:** Session logs echo **aliases/DB names**, not the resolved `host:port/service`.
+  The **actual resolution happens at runtime on the Integration Service host** via `tnsnames.ora`, `odbc.ini`, LDAP, or driver configs and is **not written back in a structured way**.
+* **Unstructured & inconsistent:** Free-text varies by version/adapter/verbosity; any parsing is fragile.
+* **Scattered & unindexed:** Spread across servers; **no central index**; not segregated by workflow.
+* **Environment/parameter drift:** Parameter-file precedence and host-side alias changes mean **different runs can resolve to different endpoints**.
+
+**What logs can vs. cannot do**
+
+* **Can:** Prove which **connection alias/URL** a specific **session** used on a specific **run**; show param file used, IS/node.
+* **Cannot:** Produce an accurate, current, enterprise-wide **Workflow → physical DB endpoint** catalog.
+
+**Conclusion:** Logs provide **point-in-time evidence**, not authoritative endpoints. Using them to build a WF→DB instance map is **not practical and not reliable**.
