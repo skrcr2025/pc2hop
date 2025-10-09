@@ -1,0 +1,6 @@
+I’ve explored multiple approaches and spent considerable time analyzing how to extract host/port details across repositories during the reporting phase. Based on that research and hands-on validation, here’s my take:
+PowerCenter doesn’t maintain physical connection details (host/port) centrally — connections are resolved dynamically at session runtime through parameter-file precedence (session → workflow → folder → global).
+The repository holds only logical connection names or connect strings (e.g., TNS/JDBC/ODBC aliases). The actual host/port resides in server-side alias files (tnsnames.ora, odbc.ini, LDAP, etc.), which are not stored in the repository or mapping XMLs.
+Because there’s no direct linkage of workflow → connection → physical instance, even a full repository or XML extract cannot produce a reliable per-workflow endpoint list.
+A centralized “host/port per workflow” report would still miss runtime alias resolution and parameter overrides, making it incomplete without BU context.
+Practical view: A BU-by-BU approach during migration is the most dependable path — each BU’s parameter files and connection inventories provide the needed context to resolve active connections, while alias-based entries are best verified from Integration Service host configurations.
