@@ -1,0 +1,78 @@
+/* PowerCenter connection inventory with CONNECT_STRING parsing (Oracle) */
+WITH base AS (
+  SELECT
+    c.OBJECT_ID,
+    c.OBJECT_NAME                                 AS connection_name,
+    ot.OBJECT_TYPE_NAME                           AS conn_type,
+    st.CNX_SUBTYPE_NAME                           AS conn_subtype,
+    c.CONNECT_STRING                              AS connect_string,
+    /* Attribute name/value pairs (optional fallback) */
+    MAX(CASE WHEN a.ATTR_NAME IN ('ServerName','Host','Hostname') THEN ca.ATTR_VALUE END) AS attr_host,
+    MAX(CASE WHEN a.ATTR_NAME IN ('Port','PortNumber')             THEN ca.ATTR_VALUE END) AS attr_port,
+    MAX(CASE WHEN a.ATTR_NAME IN ('ServiceName','DatabaseName','DBName') THEN ca.ATTR_VALUE END) AS attr_db,
+    MAX(CASE WHEN a.ATTR_NAME = 'Schema'                           THEN ca.ATTR_VALUE END) AS attr_schema,
+    MAX(CASE WHEN a.ATTR_NAME IN ('UserName','User')               THEN ca.ATTR_VALUE END) AS attr_user
+  FROM OPB_CNX c
+  JOIN OPB_OBJECT_TYPE      ot ON ot.OBJECT_TYPE_ID       = c.OBJECT_TYPE
+  JOIN OPB_MMD_CNX          st ON st.CNX_OBJECT_TYPE      = c.OBJECT_TYPE
+                              AND st.CNX_OBJECT_SUBTYPE   = c.OBJECT_SUBTYPE
+  LEFT JOIN OPB_CNX_ATTR    ca ON ca.OBJECT_ID            = c.OBJECT_ID
+  LEFT JOIn OPB_MMD_CNX_ATTR a ON a.OBJECT_TYPE           = c.OBJECT_TYPE
+                              AND a.OBJECT_SUBTYPE        = c.OBJECT_SUBTYPE
+                              AND a.ATTR_ID               = ca.ATTR_ID
+  GROUP BY c.OBJECT_ID, c.OBJECT_NAME, ot.OBJECT_TYPE_NAME, st.CNX_SUBTYPE_NAME, c.CONNECT_STRING
+)
+/* Parse CONNECT_STRING per subtype/format */
+SELECT
+  connection_name,
+  conn_type,
+  conn_subtype,
+  connect_string,
+  /* Host extraction */
+  COALESCE(
+    /* Oracle TNS: (HOST=host) */
+    REGEXP_SUBSTR(connect_string, '\(HOST=([^)]+)\)',        1, 1, NULL, 1),
+    /* Oracle EZCONNECT/JDBC thin: @//host:port/service or @host:port:sid */
+    REGEXP_SUBSTR(connect_string, '@//?([^:/()]+)',          1, 1, NULL, 1),
+    /* PostgreSQL JDBC: jdbc:postgresql://host:port/db */
+    REGEXP_SUBSTR(connect_string, 'jdbc:postgresql://([^:/]+)', 1, 1, NULL, 1),
+    /* SQL Server JDBC: jdbc:sqlserver://host[:port];databaseName= */
+    REGEXP_SUBSTR(connect_string, 'jdbc:sqlserver://([^:;]+)', 1, 1, NULL, 1),
+    /* Fallback to attribute */
+    attr_host
+  ) AS host,
+  /* Port extraction */
+  COALESCE(
+    /* Oracle TNS: (PORT=1521) */
+    REGEXP_SUBSTR(connect_string, '\(PORT=([0-9]+)\)',       1, 1, NULL, 1),
+    /* Oracle EZCONNECT/JDBC thin and PostgreSQL JDBC: :port after host */
+    REGEXP_SUBSTR(connect_string, '://[^/:]+:([0-9]+)',      1, 1, NULL, 1),
+    REGEXP_SUBSTR(connect_string, '@//[^:]+:([0-9]+)',       1, 1, NULL, 1),
+    REGEXP_SUBSTR(connect_string, '@[^:]+:([0-9]+):',        1, 1, NULL, 1),
+    /* SQL Server JDBC optional port */
+    REGEXP_SUBSTR(connect_string, 'jdbc:sqlserver://[^:;]+:([0-9]+)', 1, 1, NULL, 1),
+    /* Fallback to attribute */
+    attr_port
+  ) AS port,
+  /* Database/service/SID extraction */
+  COALESCE(
+    /* Oracle TNS: (SERVICE_NAME=service) */
+    REGEXP_SUBSTR(connect_string, '\(SERVICE_NAME=([^)]+)\)', 1, 1, NULL, 1),
+    /* Oracle TNS fallback: (SID=ORCL) */
+    REGEXP_SUBSTR(connect_string, '\(SID=([^)]+)\)',          1, 1, NULL, 1),
+    /* Oracle EZCONNECT/JDBC thin: /service after port */
+    REGEXP_SUBSTR(connect_string, '://[^/]+/([^?;:\)]+)',     1, 1, NULL, 1),
+    REGEXP_SUBSTR(connect_string, '@//[^/]+/([^?;:\)]+)',     1, 1, NULL, 1),
+    REGEXP_SUBSTR(connect_string, '@[^:]+:[0-9]+:([^:/\)]+)', 1, 1, NULL, 1),
+    /* PostgreSQL JDBC: jdbc:postgresql://host:port/db */
+    REGEXP_SUBSTR(connect_string, 'jdbc:postgresql://[^/]+/([^?;]+)', 1, 1, NULL, 1),
+    /* SQL Server JDBC: ;databaseName=DB */
+    REGEXP_SUBSTR(connect_string, 'databaseName=([^;]+)',     1, 1, NULL, 1),
+    /* Fallback to attribute */
+    attr_db
+  ) AS database_service,
+  /* Username/schema from attributes if present */
+  attr_schema  AS schema_name,
+  attr_user    AS username
+FROM base
+ORDER BY connection_name;
