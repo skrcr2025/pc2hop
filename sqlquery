@@ -1,0 +1,34 @@
+/* All connection objects with physical attributes (Oracle) */
+SELECT
+  c.OBJECT_NAME                         AS connection_name,
+  ot.OBJECT_TYPE_NAME                   AS conn_type,
+  st.CNX_SUBTYPE_NAME                   AS conn_subtype,
+  MAX(CASE
+        WHEN a.ATTR_NAME IN ('ServerName','Host','Hostname') THEN ca.ATTR_VALUE
+      END)                              AS host,
+  MAX(CASE
+        WHEN a.ATTR_NAME IN ('Port','PortNumber') THEN ca.ATTR_VALUE
+      END)                              AS port,
+  MAX(CASE
+        WHEN a.ATTR_NAME IN ('ServiceName','DatabaseName','DBName') THEN ca.ATTR_VALUE
+      END)                              AS database_name,
+  MAX(CASE
+        WHEN a.ATTR_NAME = 'Schema' THEN ca.ATTR_VALUE
+      END)                              AS schema_name,
+  MAX(CASE
+        WHEN a.ATTR_NAME IN ('UserName','User') THEN ca.ATTR_VALUE
+      END)                              AS username,
+  c.CONNECT_STRING                      AS connect_string_raw
+FROM OPB_CNX c
+JOIN OPB_OBJECT_TYPE      ot ON ot.OBJECT_TYPE_ID       = c.OBJECT_TYPE
+JOIN OPB_MMD_CNX          st ON st.CNX_OBJECT_TYPE      = c.OBJECT_TYPE
+                            AND st.CNX_OBJECT_SUBTYPE   = c.OBJECT_SUBTYPE
+LEFT JOIN OPB_CNX_ATTR    ca ON ca.OBJECT_ID            = c.OBJECT_ID
+LEFT JOIN OPB_MMD_CNX_ATTR a ON a.OBJECT_TYPE           = c.OBJECT_TYPE
+                             AND a.OBJECT_SUBTYPE       = c.OBJECT_SUBTYPE
+                             AND a.ATTR_ID              = ca.ATTR_ID
+/* Optional filter for relational DB connections only: */
+/* WHERE ot.OBJECT_TYPE_NAME = 'Relational' */
+GROUP BY
+  c.OBJECT_NAME, ot.OBJECT_TYPE_NAME, st.CNX_SUBTYPE_NAME, c.CONNECT_STRING
+ORDER BY c.OBJECT_NAME;
