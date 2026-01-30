@@ -1,0 +1,83 @@
+Overview
+The Fidelity Data Integration Platform (FDIP) is a metadata-driven data integration framework built around five core entities that together define reusable, environment-agnostic data pipelines. The architecture emphasizes separation of concerns between logical definitions and physical implementations, enabling multi-environment deployments (dev, sit, uat, prod) and seamless disaster recovery (DR) switching.
+
+Overview
+Core Entity Model
+Key Architectural Principles
+1. Logical/Physical Separation
+2. Transparency of Dependencies
+3. Environment Parameterization
+4. Reusable Data Contracts
+5. Composable Pipeline Tasks
+6. Enterprise Integration
+Entity Relationships
+DR & Compliance Considerations
+Implementation
+Datasets
+
+
+Core Entity Model
+Datastore	Logical representation of data sources/targets	Platform-agnostic identifiers (e.g., wealthdb); physical specifications per environment; supports Oracle, S3, APIs, streaming
+Connection	Physical connection binding to a datastore	Environment-specific host/credentials; links application (app_id) to datastore; supports multiple authentication protocols (basic, TCPS)
+Dataset	Schema/contract definition for data	Reusable across pipelines; supports SQL (tables/views) and file-based layouts; includes field types, lengths, and format metadata
+Pipeline	End-to-end data flow orchestration	Composes datasets + connections; defines extract, transform, load (ETL) tasks; supports actions (notifications), retry policies, and SLAs
+Application	Logical grouping & authorization boundary	Organizes assets; facilitates RBAC; enables DR compliance segmentation per regulatory requirements
+Key Architectural Principles
+1. Logical/Physical Separation
+Datastores are defined logically (e.g., wealthdb) without hardcoding hosts
+Connections bind physical details (host, port, service) per environment
+Enables simultaneous production and DR utilization for audit-sensitive pipelines (e.g., FINRA feeds)
+2. Transparency of Dependencies
+Data connections can be used to identify hosts that are used across applications
+Data sets can be used to identify tables or other assets used across applications
+3. Environment Parameterization
+All entities support environment-specific variants (dev, sit, uat, prod)
+Pipelines reference logical names; runtime resolves to environment context
+4. Reusable Data Contracts
+Datasets define schemas with precision (field types, lengths, formats)
+Intended for integration with enterprise governance (Collibra) as source of truth
+Supports both database (sql type) and file-based (delimited, compression, encryption) sources
+5. Composable Pipeline Tasks
+Tasks support multiple source datasets with filters, column projections
+Transform operations: join, filter, SQL expressions
+Target mappings with optional field-level functions (rtrim, upper, round)
+Event-driven actions (email, Slack) on success/failure
+6. Enterprise Integration
+Designed for linkage with LeanIX (asset registry) via asset_id and reference URLs
+Visibility into usage patterns and upstream/downstream dependencies
+Entity Relationships
+┌─────────────┐       ┌─────────────┐
+│ Application │◄──────│   Pipeline  │
+└─────────────┘       └──────┬──────┘
+                             │ uses
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+       ┌───────────┐  ┌───────────┐  ┌───────────┐
+       │  Dataset  │  │Connection │  │  Actions  │
+       └─────┬─────┘  └─────┬─────┘  └───────────┘
+             │              │
+             │   references │ binds to
+             ▼              ▼
+       ┌────────────────────────┐
+       │       Datastore        │
+       │  (Logical Definition)  │
+       └────────────────────────┘
+DR & Compliance Considerations
+The model explicitly supports dual-mode operation where:
+
+Production applications read from primary datacenter (RTP)
+DR-compliance applications (external regulatory feeds) can switch to secondary (OMA)
+Same logical datastore; different physical bindings per application context
+Enables semi-annual DR compliance validation without disrupting production consumers
+
+
+Implementation
+Datasets
+A dataset, as an entity requires multiple facets of data governance to be applied to it including schema definition, data classification, data access controls and data quality to start.  These capabilities are beyond the scope of the data integration platform so the platform will focus on a limited scope while keeping in mind future integration with a centralized platform. 
+
+Data sets are defined at the application level.
+Authorization to read or write a dataset is based on the AD groups associated with the application
+Datasets will include
+Data Contract ID - the identifier for the data contract to apply to this dataset.  This may eventually come from a Data Contract Registry
+external_asset_id - the identifier for the dataset in the external platform where it is managed/governed
+external_system - the external system where the data set is managed/governed
