@@ -1,0 +1,26 @@
+//Create Datastore API:
+
+{
+   "datastore_name": "wealthDB",
+   "owner_app_id": "ap135217", // This will the datastore App Id
+   "datastore_description": "Wealth  DB",
+   "datastore_platform": "oracle",
+   "environment_specific_configurations": [
+        {
+            "environment": "dev",
+            "hostname": "wealthdbdev.fmr.com"
+        },
+        {
+            "environment": "sit",
+            "hostname": "wealthdbsit.fmr.com"
+        },
+        {
+            "environment": "uat",
+            "hostname": "wealthdbuat.fmr.com"
+        },
+        {
+            "environment": "prod",
+            "hostname": "wealthdbprod.fmr.com"
+        }
+    ]
+}
