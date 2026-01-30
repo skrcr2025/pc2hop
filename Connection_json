@@ -1,0 +1,38 @@
+//Create Connection API:
+
+{
+  "datastore_name": "wealthdb",
+  "connection_name": "WealthDBReadWrite",
+  "app_id": "ap135218", // This will be the application or consumer App Id
+  "common_connection_properties": {
+    "authentication_method": "basic",
+    "service_protocol": "TCP",
+    "port": "1521"
+  },
+  "environment_specific_connections": [
+    {
+      "environment": "dev",
+      "host": "wealthdbdev.fmr.com",
+      "database_name": "WEALTHD",
+      "connection_service_name": "WEALTHD"
+    },
+    {
+      "environment": "sit",
+      "host": "wealthdbsit.fmr.com",
+      "database_name": "WEALTHS",
+      "connection_service_name": "WEALTHS"
+    },
+    {
+      "environment": "uat",
+      "host": "wealthdbuat.fmr.com",
+      "database_name": "WEALTHU",
+      "connection_service_name": "WEALTHU"
+    },
+    {
+      "environment": "prod",
+      "host": "wealthdbprod.fmr.com",
+      "database_name": "WEALTHP",
+      "connection_service_name": "WEALTHP"
+    }
+  ]
+}
