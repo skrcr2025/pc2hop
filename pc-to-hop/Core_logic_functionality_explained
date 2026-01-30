@@ -1,0 +1,137 @@
+You’re not missing something — this is **the core confusion** because “JSON → DAG → Spark” can mean two *very different* product models.
+
+There are only **3 ways** a platform can honestly claim “deploy JSON and it runs the logic”, even for greenfield. If the architects didn’t make this explicit, it will feel hand-wavy.
+
+---
+
+## The 3 real models (one of these must be true)
+
+### Model 1 — **Declarative engine** (JSON fully describes the transformation)
+
+Here, the “generic PySpark executor” is basically an **interpreter**:
+
+* It reads `source_dataset`, `target_dataset`
+* It reads `mapping.field_mappings` + `filters` (and later `transforms`)
+* It builds a Spark plan (DataFrames / Spark SQL) at runtime
+
+✅ Greenfield works without custom code
+✅ JSON is the “program”
+❌ Only works for the subset of transformations the JSON schema supports
+
+**This is the only model where devs don’t write PySpark.**
+They “write” logic in JSON using supported constructs.
+
+---
+
+### Model 2 — **Template engine** (JSON selects a prebuilt job type)
+
+Here, “generic executor” means you have a library of prebuilt patterns:
+
+* `Extract&Load` template
+* `Oracle→Oracle CDC` template
+* `File copy` template
+* `Merge/upsert` template
+
+The JSON does not describe arbitrary logic. It describes:
+
+* which template
+* with which parameters
+
+✅ Fast for common patterns
+✅ Easy governance
+❌ Not general ETL (you can’t express arbitrary Informatica mappings)
+
+---
+
+### Model 3 — **Artifact reference** (JSON points to custom code)
+
+Here, devs still write the logic, but the platform standardizes orchestration:
+
+* JSON includes or references:
+
+  * `script_path` / `artifact_id` / `repo_ref`
+* DAG just launches Spark with that artifact
+* JSON supplies datasets/connections/env bindings
+
+✅ Fully flexible (any logic)
+✅ Most realistic for complex ETL
+❌ Not “tool agnostic JSON” in spirit unless they define a standard packaging format
+
+---
+
+## Why you feel confused
+
+Because the template you pasted looks like it’s **trying** to be Model 1, but it also says “transforms not in phase 1” and only includes simple scalar mapping hints.
+
+That means **today they likely only support either**:
+
+* Model 1 for very limited transforms (filters + simple mappings), OR
+* Model 2 (limited set of job patterns), OR
+* They quietly rely on Model 3 but didn’t show the artifact reference part yet.
+
+---
+
+## The key point: developers must express “core logic” somehow
+
+So if devs aren’t writing PySpark, then the platform must provide **a declarative grammar** that is powerful enough.
+
+In your template, the only “logic carriers” are:
+
+* `filters` (WHERE clause)
+* `mapping.field_mappings` with `FUNCTION($n)`
+* (future) `transforms`
+
+So the executor can only “decide” core logic if:
+
+* there is a real **function catalog**
+* there is a real **transform DSL** (joins, group by, lookup, dedupe, aggregates, merge/upsert)
+
+Without that, it’s not a full ETL platform — it’s an EL/Copy framework.
+
+---
+
+## The simplest way to resolve this on a call
+
+Ask this one question, very directly:
+
+> “In greenfield, where does the transformation logic live: in the pipeline JSON (interpreted), in a template library selected by JSON, or in custom Spark code referenced by JSON?”
+
+And follow it with:
+
+> “Can you show a real example of a pipeline that performs a join + aggregation + lookup? Where is that logic expressed?”
+
+That forces the truth.
+
+---
+
+## A mental mapping to Informatica (super simple)
+
+* **PowerCenter mapping logic** must become either:
+
+  * JSON transform DSL (Model 1), OR
+  * a named template (Model 2), OR
+  * a Spark artifact (Model 3)
+
+Airflow DAG is never the mapping logic — it just orchestrates.
+
+---
+
+## What I think is happening (based on what you’ve shown)
+
+They have:
+
+* a generic Spark job + connector framework
+* currently supporting basic Extract/Load + simple mappings
+* “transforms” are planned later
+
+So greenfield “works” today only for:
+
+* basic ingestion patterns
+* maybe simple projection/filter
+* not complex ETL like typical Informatica.
+
+That’s why it feels incomplete.
+
+---
+
+If you want, paste **one real pipeline JSON** they say is already working (even with names redacted). I’ll tell you immediately which model it is (1/2/3) and whether it can represent typical Informatica mapping logic.
