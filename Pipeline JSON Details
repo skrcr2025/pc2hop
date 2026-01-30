@@ -1,0 +1,275 @@
+Pipeline JSON Details
+
+
+Base
+
+
+{ 
+
+    "pipeline_name": "", 
+    "default_args": {....},
+    "global_properties": {....}, 
+    "tasks": [.....],
+    "dependencies": ["Task dependency definitions or 'None'"],
+    "monitoring": {"sla_minutes": ""  }
+}
+pipeline_name
+
+the unique name of the pipeline within the appid	string	
+default_args
+
+
+
+
+global_properties
+
+
+
+
+tasks
+
+
+Array	minimum 1 task
+dependencies
+
+
+
+
+monitoring
+
+
+
+
+default_args
+
+
+   "default_args": {
+            "pl_id": "",
+            "app_id": "",
+            "env": "", 
+            "pr_id": "", 
+            "description": ""
+            },
+pl_id
+
+
+string	
+app_id
+
+
+
+
+env
+
+
+
+
+pr_id
+
+
+Array	minimum 1 task
+description
+
+
+
+
+
+
+
+
+
+tasks
+
+
+{"task_id": "task_name",
+            "type": "ExtractLoad", 
+            "run_time": "spark", 
+            "workloadProfile": { .... }, 
+            "source_datasets": [......],
+            "transforms": [....],
+            "target_dataset": {....},
+            "field_mappings": {......}
+            } 
+task_id
+
+
+
+
+task_type
+
+
+
+
+run_time
+
+
+
+
+run_time_params
+
+
+Array	minimum 1 task
+source_datasets
+
+
+
+
+transforms
+
+NOT IN PHASE 1
+
+describes the set of in-flight non-scalar transformation that need to be applied
+
+Array	
+target_dataset
+
+
+
+
+field_mappings
+
+
+
+
+task.workloadProfile
+
+
+workloadProfile:
+{
+ type: "resourceProfile" 
+
+}
+      
+workloadProfile
+
+
+
+
+
+type
+memory - memory intensive workload
+string	
+
+
+compute  - compute intensive workload
+string	
+
+
+balanced - balanced workload
+string	
+global_properties
+
+
+"global_properties": {"retries": "3",
+                      "retry_delay_minutes": "1"
+}
+retries
+
+Numeric value of Retry
+
+
+retry_delay_minutes
+
+Time Interval in minutes between retry
+
+
+source_datasets
+"source_datasets": 
+    [
+        {"dataset": "source.schema.table_name", 
+        "alias": "Source table alias",
+        "connection": "Source connection name",
+        "query_parameters": {"batch_size": "Number of records per batch",
+                    "timeout_seconds": "Query timeout in seconds"}, 
+        "filters": "Where condition in the SQL query"
+        }
+    ],
+dataset
+
+
+
+
+alias
+
+
+
+
+connection
+
+
+
+
+query_parameters
+
+
+
+
+
+batch_size
+
+
+
+
+timeout_seconds
+
+
+
+filters
+
+
+
+
+target_dataset
+ "target_dataset": {    
+            "dataset": "target.schema.table_name", 
+            "alias": "Target table alias",
+            "connection": "Target connection name" 
+            }
+dataset
+
+
+
+
+alias
+
+
+
+
+connection
+
+
+
+
+field_mappings
+"mappings": {
+        "automap": "Automatic field mapping (true/false)", 
+        field_mappings: [
+                  {"target_field": "",
+                   "source_field": [{"type": "",
+                                    "dataset": "",
+                                    "column": ""}],
+                   "function":""}
+                 ]
+            }
+automap
+
+if true, the source and target fields will automatically be mapped according to column names	boolean	
+field_mappings
+
+
+Array	
+
+target_field	The name of the field in the target data set that the value is being mapped to	string	
+
+source_field	The list of fields that are used for the source value	
+
+
+       source_field.type	Indicates if the field is a field from the source data set or if it is a literal value	String	
+
+       source_field.dataset	If the type = "column", then this is the name of the source dataset.  If the type = literal, then this field is not provided in the json	String	
+
+       source_field.column	If the type = "column", then this is the name of the field in the source dataset.  If the type = literal, then this field is not provided in the json	String	
+
+       source_field.value	If the type= "literal", then this is the literal value to be used	String	
+
+function	The scalar function to apply to the source field.  "$n" is a placeholder for the source field, where "n" is the field's index in the array of source fields	String	
