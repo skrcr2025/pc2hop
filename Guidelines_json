@@ -1,0 +1,27 @@
+Datastore, Connection and Dataset
+Guidelines
+
+Datastore
+A datastore is logical name of a database or filesystem. It would entail the host details of the datastore.
+The datastore has to be registered first.
+Datastore name should be unique.
+
+Datastore Connection
+A connection is logical name for the connection. The connection name would remain the same irrespective of the environments. 
+Datastore connection should be associated with a registered datastore.
+Connection name should be unique.
+Password and user name will be stored in secrets manager or equivalent facility managed by BU application teams.
+Connection would contain the connection name and the physical spec of the datastore. For filesystem it would only have connection name.
+
+Dataset
+A dataset defines the definition of the data itself. It can be a file or table or kafka topic. It describes the where - datastore that holds the data , the what - what is the dataset layout and if the dataset object is not physically defined(function as a table but by joining multiple tables) then what query that defines this dataset.
+Dataset name should be unique
+Dataset name follows a 3 part notation - datastore_name.schema_name.dataset_name or datastore_name.folder_name.dataset_name. The notion of the folder name will be further refined to maintain consistent naming structure.
+
+
+Json Formats
+
+Approach 1: To separate the API call for datastore/connection and datastore/connection detail. Also provide only the details of the env which needs change.
+Challenges - Multiple hierarchy of API calls for developers.
+Approach 2: Combine Json for datastore/connection and datastore/connection detail. Provide the entire json payload for all envs for any change. Approach 2 is used for defining the datastore/connection and dataset.
+Challenges  - Forcing a single API call to provide entire payload can result in overriding existing connection details.
