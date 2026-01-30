@@ -1,0 +1,62 @@
+{
+
+  "pipeline_name": "Name of the Pipeline",
+  "default_args": {
+    "pl_id": "Pipeline ID",
+    "app_id": "Application ID",
+    "env": "Environment (dev/sit/prod)",
+    "pr_id": "Product ID",
+    "description": "Description of the pipeline purpose"
+  },
+  "global_properties": {
+    "retries": "Numeric value of Retry",
+    "retry_delay_minutes": "Time Interval in minutes between retry"
+  },
+  "tasks": [
+    {
+      "task_id": "task_name",
+      "type": "Task type (Extract, Load, Transform, Extract&Load)",
+      "run_time": "spark",
+ 	  "workloadProfile": { # Default is balanced, can be compute or memory intensive.  
+ 		                  "type": "memory, compute or balanced"
+     	                 },
+      "source_dataset": [{
+                          "dataset": "source.schema.table_name",
+                          "alias": "Source table alias",
+                          "connection": "Source connection name",
+                          "query_parameters": { /**Use these query parameters when your source dataset is SQL**/ 
+                                               "batch_size": "Number of records per batch",
+                                               "timeout_seconds": "Query timeout in seconds",
+                                               },
+                          "filters": "Where condition in the SQL query",
+                         }],
+      "target_dataset": {
+                          "dataset": "target.schema.table_name",
+                          "alias": "Target table alias",
+                          "connection": "Target connection name"
+                         },
+      "mapping": {
+        "automap": "Automatic field mapping (true/false)",
+        "field_mappings": [
+                  {"target_field": " target column",
+                   "source_field": [
+                                    {"type": "literal or column",
+                                    "dataset": "if column then the name of the source data set",
+                                    "column": "the name of the field in the source dataset"
+                                    },
+                                     {"type": "literal or column",
+                                    "value": "the literal value to be used"
+                                    }
+                                    ],
+                   "function":"the name of the function to apply to the source field.  will be in the form FUNCTION($n)"}
+                 ]
+              }
+    }
+  ],
+  "dependencies": [
+    "Task dependency definitions or 'None'"
+  ],
+  "monitoring": {
+    "sla_minutes": "Time in minutes for pipeline completion"
+  }
+}
