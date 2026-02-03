@@ -1,0 +1,71 @@
+Migration Delivery Timeline
+Start: Feb 3, 2026
+End: July 31, 2026
+Total Duration: ~6 months
+Phase 1: Readiness & Feasibility
+Feb 3 – Mar 6, 2026 (≈5 weeks)
+Focus
+Establish a realistic migration baseline
+Eliminate false assumptions early
+Key Outcomes
+Representative analysis of Informatica workflows
+Platform JSON expressiveness comparison
+Classified inventory:
+Straightforward migrations
+Manual / custom cases
+Unsupported patterns
+Decision Gate (Early March)
+Confirm feasible migration scope
+Approve move into platform validation
+Phase 2: Platform Validation
+Mar 9 – Apr 3, 2026 (≈4 weeks)
+Focus
+Prove that valid definitions produce working pipelines
+Key Outcomes
+Deployed JSONs validated via control‑plane APIs
+Confirmed DAG creation and execution behavior
+Identified runtime gaps and constraints
+Decision Gate (Early April)
+Confirm platform behavior is sufficiently understood
+Agree on known constraints entering migration design
+Phase 3: Automation & Migration Design
+Apr 6 – May 8, 2026 (≈5 weeks)
+Focus
+Apply automation selectively and safely
+Key Outcomes
+Defined automation boundaries and guardrails
+Expected automation coverage percentage
+Explicit manual exception strategy
+Migration execution playbook
+Decision Gate (Mid‑May)
+Approve automation scope
+Authorize scaled execution
+Phase 4: Scaled Migration Execution
+May 11 – July 31, 2026 (≈11 weeks)
+Focus
+Predictable delivery at scale with controlled risk
+Key Activities
+Prioritize workflows by complexity
+Apply validated automation
+Handle exceptions deliberately
+Continuous validation and feedback loops
+Key Outcomes
+Phased migration completion
+Reduced operational surprises
+Stable, supportable target‑platform pipelines
+Executive View: Timeline at a Glance
+ 
+Plain Text
+Plain Text
+Feb  | Readiness & Feasibility
+Mar  | Readiness → Platform Validation
+Apr  | Platform Validation → Automation Strategy
+May  | Automation Strategy → Scaled Execution
+Jun  | Scaled Execution
+Jul  | Scaled Execution → Completion
+ 
+Why This Timeline Works
+Front‑loads risk discovery
+Ensures automation only follows proof
+Preserves schedule control while allowing learning
+Supports confident delivery by July 31, 2026
