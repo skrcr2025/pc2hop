@@ -1,0 +1,74 @@
+Write Python (pandas) code to identify Phase-1 migration target workflows from two Excel sheets.
+
+Known columns (from my exports):
+
+Sheet 1: WF_MAPPING_RELATION
+- repo_name
+- folder_name
+- workflow_id
+- workflow_name
+- workflow_run_counts_30d
+- workflow_run_counts_60d
+- workflow_run_counts_180d
+- mapping_id
+- mapping_name
+
+Sheet 2: MAPPING_LEVEL_METADATA
+- repo_name
+- folder_name
+- mapping_id
+- mapping_name
+- etl_vs_elt_classification
+- complexity_score
+- source_types
+- target_types
+- connection_types
+- transformation_summary
+- run_stats_30d
+- run_stats_60d
+- run_stats_180d
+
+Relationship:
+- Join the sheets on mapping_id (mapping_id is the primary join key).
+- Workflow is the unit of filtering; mapping attributes come from sheet 2.
+
+Goal:
+Return workflows that meet ALL conditions:
+1) Active in last 365 days:
+   - Prefer a 365-day run count if it exists.
+   - Otherwise infer “active” using available run count columns:
+     active = (workflow_run_counts_180d > 0) OR (workflow_run_counts_60d > 0) OR (workflow_run_counts_30d > 0).
+   - If workflow run columns are missing, fallback to mapping run stats (run_stats_180d/60d/30d) using the same rule.
+
+2) Single-mapping workflow:
+   - Keep only workflow_id values that map to exactly 1 unique mapping_id.
+
+3) Mapping is one-source and one-target (1:1):
+   - If source_count/target_count columns exist, enforce source_count==1 and target_count==1.
+   - If counts do NOT exist, infer 1:1 by parsing source_types and target_types:
+     treat delimiters like comma, semicolon, pipe.
+     1:1 means exactly one distinct source type token AND one distinct target type token after cleaning.
+
+4) Source type must be Flat File and target type must be Oracle:
+   - Case-insensitive; allow common variations.
+   - Source synonyms: ["flat file","flatfile","file","delimited","csv"]
+   - Target synonyms: ["oracle","oracle db","oracle database"]
+
+5) Complexity must be “simple”:
+   - If a complexity_bucket exists, allow ["simple","low"].
+   - Otherwise use complexity_score <= threshold (default threshold=3; keep it configurable).
+
+Outputs:
+- Create a dataframe named phase1_df and export to phase1_workflows.xlsx.
+- Columns to include:
+  repo_name, folder_name, workflow_id, workflow_name, mapping_id, mapping_name,
+  source_types, target_types, complexity_score,
+  workflow_active_basis (e.g., "wf_180d>0" or "mapping_180d>0"),
+  workflow_run_counts_30d/60d/180d (if present)
+
+Quality / safety requirements:
+- Add a config dict at the top for thresholds and synonyms.
+- Infer missing columns by searching available columns with keywords (e.g., contains "run", "180", "workflow", "last_run").
+- Validate required core columns exist: workflow_id, mapping_id.
+- Print row counts after each filter step.
+- Avoid duplicates after join; ensure one row per workflow_id in the final output.
